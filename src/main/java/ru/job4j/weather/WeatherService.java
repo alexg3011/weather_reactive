@@ -4,10 +4,13 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedInputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class WeatherService {
@@ -32,22 +35,19 @@ public class WeatherService {
     }
 
     public Mono<Weather> getHottest() {
-        Weather hottestWeather = weathers.get(1);
-        for (Weather weather : weathers.values()) {
-            if (weather.getTemperature() > hottestWeather.getTemperature()) {
-                hottestWeather = weather;
-            }
-        }
+
+        Weather hottestWeather = weathers.values()
+                .stream()
+                .max(Comparator.comparingInt(Weather::getTemperature))
+                .get();
         return Mono.just(hottestWeather);
     }
 
     public Flux<Weather> getCitiesGreaterThan(Integer temp) {
-        List<Weather> weatherList = new ArrayList<>();
-        for (Weather weather : weathers.values()) {
-            if (weather.getTemperature() > temp) {
-                weatherList.add(weather);
-            }
-        }
+        List<Weather> weatherList = weathers.values()
+                .stream()
+                .filter(x -> x.getTemperature() > temp)
+                .collect(Collectors.toList());
         return Flux.fromIterable(weatherList);
     }
 }
